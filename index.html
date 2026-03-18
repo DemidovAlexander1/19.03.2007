@@ -319,7 +319,7 @@
         }
         .wish-photo img {
             max-width: 100%;
-            max-height: 200px;
+            max-height: 300px;  /* увеличен размер */
             border-radius: 16px;
             border: 3px solid #b33e2c;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -415,7 +415,7 @@
     <div id="toast" class="toast-message"></div>
 
     <script type="module">
-        // ========== ВАШ КОНФИГ FIREBASE (скопирован из сообщения) ==========
+        // ========== ВАШ КОНФИГ FIREBASE ==========
         const firebaseConfig = {
             apiKey: "AIzaSyAedkUFSTlUB6YtPn9rubSqFmHvWqLzUsI",
             authDomain: "alex-8e7de.firebaseapp.com",
@@ -473,7 +473,7 @@
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const maxWidth = 300;
+                    const maxWidth = 600; // увеличим до 600 для лучшего качества
                     if (width > maxWidth) {
                         height = (maxWidth / width) * height;
                         width = maxWidth;
@@ -482,7 +482,7 @@
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.8); // качество 0.8
                     currentPhotoBase64 = resizedDataUrl;
                     photoPreview.src = resizedDataUrl;
                     photoPreview.classList.add('show');
@@ -561,7 +561,7 @@
                         html += `
                             <div class="wish-card neon-border">
                                 <div class="wish-header"><span class="wish-name">✧ ${name}</span> <span class="wish-date">${formatted}</span></div>
-                                ${image ? `<div class="wish-photo"><img src="${image}" alt="user photo" onclick="window.open('${image}', '_blank')"></div>` : ''}
+                                ${image ? `<div class="wish-photo"><img src="${image}" alt="user photo" onclick="openPhotoInNewTab('${image}')"></div>` : ''}
                                 <div class="wish-text">${text}</div>
                             </div>
                         `;
@@ -576,6 +576,25 @@
             });
         }
 
+        // Функция открытия фото в новом окне (работает с base64)
+        window.openPhotoInNewTab = function(imageSrc) {
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+                newWindow.document.write(`
+                    <html>
+                        <head><title>Фото пожелания</title></head>
+                        <body style="margin:0; display:flex; align-items:center; justify-content:center; background:#000;">
+                            <img src="${imageSrc}" style="max-width:100%; max-height:100vh; object-fit:contain;">
+                        </body>
+                    </html>
+                `);
+                newWindow.document.close();
+            } else {
+                // Если блокировщик всплывающих окон, покажем в текущем
+                alert('Разрешите всплывающие окна для открытия фото');
+            }
+        };
+
         // ========== Отправка пожелания ==========
         async function addWish(name, text, imageBase64) {
             if (!text.trim()) {
@@ -583,14 +602,14 @@
                 return false;
             }
 
-            // Блокируем кнопку на время отправки, чтобы избежать двойной отправки
+            // Блокируем кнопку на время отправки
             submitSeal.style.pointerEvents = 'none';
             submitSeal.style.opacity = '0.7';
 
             // Анимация: лист уезжает вниз
             paper.classList.add('slide-out');
 
-            // Отправка в Firebase (или демо)
+            // Отправка в Firebase
             if (db) {
                 try {
                     await addDoc(collection(db, 'wishes'), {
@@ -605,17 +624,15 @@
                     showToast('Ошибка, попробуйте снова');
                 }
             } else {
-                // Демо-режим: просто имитируем отправку
+                // Демо-режим
                 await new Promise(resolve => setTimeout(resolve, 300));
                 showToast('Демо: пожелание не сохранено (проверьте Firebase)');
             }
 
-            // Очищаем форму через 400 мс (длительность slide-out)
+            // Очищаем форму через 400 мс
             setTimeout(() => {
-                // Очистить поля
                 authorName.value = '';
                 wishText.value = '';
-                // Сбросить фото
                 currentPhotoBase64 = null;
                 photoPreview.classList.remove('show');
                 removePhoto.classList.remove('show');
@@ -624,7 +641,6 @@
                 // Убираем slide-out и добавляем slide-in
                 paper.classList.remove('slide-out');
                 paper.classList.add('slide-in');
-                // Убираем slide-in через 0.4 с
                 setTimeout(() => {
                     paper.classList.remove('slide-in');
                 }, 400);
