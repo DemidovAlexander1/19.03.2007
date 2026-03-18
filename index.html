@@ -473,7 +473,7 @@
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const maxWidth = 600; // увеличим до 600 для лучшего качества
+                    const maxWidth = 600; // увеличил для лучшего качества
                     if (width > maxWidth) {
                         height = (maxWidth / width) * height;
                         width = maxWidth;
@@ -590,7 +590,6 @@
                 `);
                 newWindow.document.close();
             } else {
-                // Если блокировщик всплывающих окон, покажем в текущем
                 alert('Разрешите всплывающие окна для открытия фото');
             }
         };
@@ -677,5 +676,10 @@
         updateVisitorCounter();
         subscribeToWishes();
     </script>
+    <!-- Краткая инструкция по настройке Firestore (можно удалить после прочтения) -->
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; background: #222; color: #ccc; text-align: center; font-size: 0.8rem; padding: 4px; z-index: 1000;">
+        ⚡ Не забудьте в консоли Firebase (Firestore → Правила) установить: 
+        <code style="background:#333; padding:2px 6px;">allow read, write: if true;</code> и опубликовать.
+    </div>
 </body>
 </html>
