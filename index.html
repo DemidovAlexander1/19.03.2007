@@ -31,7 +31,7 @@
             transition: background-color 0.4s, color 0.3s;
         }
 
-        /* ===== Фоновые волны (нейтральные) ===== */
+        /* ===== Фоновые волны ===== */
         .wave-bg {
             position: fixed;
             top: 0;
@@ -134,6 +134,10 @@
             gap: 0.5rem;
             color: inherit;
             box-shadow: 0 0 8px currentColor;
+            transition: 0.2s;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.02);
         }
 
         /* Письмо */
@@ -144,11 +148,11 @@
             z-index: 5;
         }
         .letter-card {
-            padding: 2rem 2rem 4rem; /* увеличен нижний отступ, чтобы печать не обрезалась */
+            padding: 2rem 2rem 4rem;
             border-radius: 24px;
             position: relative;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            overflow: visible; /* чтобы печать не обрезалась */
+            overflow: visible;
         }
         .paper {
             padding: 2rem 1.5rem 2.5rem;
@@ -175,10 +179,10 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* Восковая печать — теперь не обрезана */
+        /* Восковая печать */
         .wax-seal {
             position: absolute;
-            bottom: -5px;       /* немного поднял, чтобы не выходила за границы карточки */
+            bottom: -5px;
             right: 30px;
             width: 80px;
             height: 80px;
@@ -193,7 +197,7 @@
             color: #ffd7b5;
             font-size: 2rem;
             transition: all 0.2s;
-            z-index: 20;        /* выше всего */
+            z-index: 20;
         }
         .wax-seal:hover {
             transform: scale(1.05) rotate(2deg);
@@ -319,6 +323,12 @@
             border-radius: 16px;
             border: 3px solid #b33e2c;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .wish-photo img:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
         }
         .wish-text {
             font-size: 1.1rem;
@@ -405,18 +415,15 @@
     <div id="toast" class="toast-message"></div>
 
     <script type="module">
-        // ========== НАСТРОЙКА FIREBASE ==========
-        // 1. Зайдите на https://console.firebase.google.com/ и создайте проект.
-        // 2. Добавьте веб-приложение (</>), скопируйте объект firebaseConfig.
-        // 3. В левом меню выберите Firestore Database → Создать базу → тестовый режим.
-        // 4. Вставьте свой конфиг вместо примера ниже.
+        // ========== ВАШ КОНФИГ FIREBASE (скопирован из сообщения) ==========
         const firebaseConfig = {
-            apiKey: "AIzaSyB7s69zLxJ3Q9p7vKxLxJ3Q9p7vKxLxJ3Q9p7vKxL",   // ЗАМЕНИТЕ
-            authDomain: "march19-birthday.firebaseapp.com",           // ЗАМЕНИТЕ
-            projectId: "march19-birthday",                             // ЗАМЕНИТЕ
-            storageBucket: "march19-birthday.appspot.com",            // ЗАМЕНИТЕ
-            messagingSenderId: "123456789012",                         // ЗАМЕНИТЕ
-            appId: "1:123456789012:web:abc123def456"                   // ЗАМЕНИТЕ
+            apiKey: "AIzaSyAedkUFSTlUB6YtPn9rubSqFmHvWqLzUsI",
+            authDomain: "alex-8e7de.firebaseapp.com",
+            projectId: "alex-8e7de",
+            storageBucket: "alex-8e7de.firebasestorage.app",
+            messagingSenderId: "819019257232",
+            appId: "1:819019257232:web:0a2fe8f621dcf925f48f15",
+            measurementId: "G-834GS53CQN"
         };
 
         const { initializeApp, getFirestore, collection, addDoc, query, orderBy, onSnapshot, increment, doc, setDoc, getDoc, updateDoc } = window.firebaseModules;
@@ -426,7 +433,7 @@
             db = getFirestore(app);
             console.log('✅ Firebase подключён');
         } catch (e) {
-            console.warn('⚠️ Firebase не работает, используется демо-режим. Проверьте конфиг.');
+            console.warn('⚠️ Ошибка Firebase, используется демо-режим', e);
             db = null;
         }
 
@@ -459,7 +466,6 @@
                 showToast('Пожалуйста, выберите изображение');
                 return;
             }
-            // Ресайз до 300px
             const reader = new FileReader();
             reader.onload = (event) => {
                 const img = new Image();
@@ -555,7 +561,7 @@
                         html += `
                             <div class="wish-card neon-border">
                                 <div class="wish-header"><span class="wish-name">✧ ${name}</span> <span class="wish-date">${formatted}</span></div>
-                                ${image ? `<div class="wish-photo"><img src="${image}" alt="user photo"></div>` : ''}
+                                ${image ? `<div class="wish-photo"><img src="${image}" alt="user photo" onclick="window.open('${image}', '_blank')"></div>` : ''}
                                 <div class="wish-text">${text}</div>
                             </div>
                         `;
@@ -577,6 +583,10 @@
                 return false;
             }
 
+            // Блокируем кнопку на время отправки, чтобы избежать двойной отправки
+            submitSeal.style.pointerEvents = 'none';
+            submitSeal.style.opacity = '0.7';
+
             // Анимация: лист уезжает вниз
             paper.classList.add('slide-out');
 
@@ -595,7 +605,9 @@
                     showToast('Ошибка, попробуйте снова');
                 }
             } else {
-                showToast('Демо: пожелание не сохранено (настройте Firebase)');
+                // Демо-режим: просто имитируем отправку
+                await new Promise(resolve => setTimeout(resolve, 300));
+                showToast('Демо: пожелание не сохранено (проверьте Firebase)');
             }
 
             // Очищаем форму через 400 мс (длительность slide-out)
@@ -612,10 +624,14 @@
                 // Убираем slide-out и добавляем slide-in
                 paper.classList.remove('slide-out');
                 paper.classList.add('slide-in');
-                // Убираем slide-in через 0.4 с, чтобы не накладывался на следующие отправки
+                // Убираем slide-in через 0.4 с
                 setTimeout(() => {
                     paper.classList.remove('slide-in');
                 }, 400);
+
+                // Разблокируем кнопку
+                submitSeal.style.pointerEvents = 'auto';
+                submitSeal.style.opacity = '1';
             }, 400);
 
             return true;
@@ -644,22 +660,6 @@
         // Запуск
         updateVisitorCounter();
         subscribeToWishes();
-
-        // Подвал с инструкцией
-        const footerNote = document.createElement('div');
-        footerNote.style.position = 'fixed';
-        footerNote.style.bottom = '0';
-        footerNote.style.left = '0';
-        footerNote.style.right = '0';
-        footerNote.style.textAlign = 'center';
-        footerNote.style.fontSize = '0.7rem';
-        footerNote.style.padding = '0.3rem';
-        footerNote.style.background = 'rgba(0,0,0,0.5)';
-        footerNote.style.color = '#ccc';
-        footerNote.style.zIndex = '100';
-        footerNote.style.backdropFilter = 'blur(4px)';
-        footerNote.innerHTML = '✧ для сохранения пожеланий замените firebaseConfig на свои данные (см. инструкцию в коде) ✧';
-        document.body.appendChild(footerNote);
     </script>
 </body>
 </html>
